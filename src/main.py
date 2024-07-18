@@ -7,9 +7,11 @@ model = tf.keras.models.load_model('../mnist_model.h5')
 
 
 def classify_digit(img):
-    # Preprocess the image
-    img = img.reshape(1, 28, 28, 1)
-    img = img / 255.0
+    # Ensure the image is 28x28 and invert colors
+    img = np.array(img)
+    img = np.resize(img, (28, 28))
+    img = 255 - img
+    img = img.reshape(1, 28, 28, 1).astype('float32') / 255.0
 
     # Make predictions
     prediction = model.predict(img)
@@ -18,15 +20,12 @@ def classify_digit(img):
     # Return the predicted label and the confidence scores for each class
     return predicted_label, {str(i): float(prediction[0][i]) for i in range(10)}
 
-
-
 # Define Gradio Interface
 iface = gr.Interface(
     fn=classify_digit,  # Function to be called on user input
-    inputs=gr.inputs.Image(shape=(28, 28), image_mode='L', invert_colors=True),  # Input type and properties
-    outputs=[gr.outputs.Label(), gr.outputs.Textbox(label='Confidence Scores')],  # Output type and properties
+    inputs=gr.Image(image_mode='L'),  # Input type and properties
+    outputs=[gr.Label(), gr.JSON(label='Confidence Scores')],  # Output type and properties
     live=True  # Enable live mode
 )
-
 # Launch the interface
 iface.launch()
